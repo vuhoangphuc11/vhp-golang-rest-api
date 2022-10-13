@@ -17,9 +17,9 @@ import (
 
 var userCollection *mongo.Collection = configs.GetCollection(configs.DB, "user")
 var validate = validator.New()
-var currentTime, _ = time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
 
 func CreateUser(c *fiber.Ctx) error {
+	var createAt, _ = time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	var user models.User
@@ -36,17 +36,17 @@ func CreateUser(c *fiber.Ctx) error {
 	}
 
 	newUser := models.User{
-		Id:         primitive.NewObjectID(),
-		Email:      user.Email,
-		FullName:   user.FullName,
-		Password:   user.Password,
-		Age:        user.Age,
-		Gender:     user.Gender,
-		Phone:      user.Phone,
-		IsActive:   user.IsActive,
-		Role:       user.Role,
-		CreateDate: currentTime,
-		UpdateDate: time.Time{},
+		Id:        primitive.NewObjectID(),
+		Email:     user.Email,
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
+		Password:  user.Password,
+		Age:       user.Age,
+		Gender:    user.Gender,
+		Phone:     user.Phone,
+		IsActive:  user.IsActive,
+		Role:      user.Role,
+		CreateAt:  createAt,
 	}
 
 	result, err := userCollection.InsertOne(ctx, newUser)
@@ -74,6 +74,7 @@ func GetUserById(c *fiber.Ctx) error {
 }
 
 func UpdateUser(c *fiber.Ctx) error {
+	var updateAt, _ = time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	userId := c.Params("userId")
 	var user models.User
@@ -92,15 +93,16 @@ func UpdateUser(c *fiber.Ctx) error {
 	}
 
 	updateUser := bson.M{
-		"email":      user.Email,
-		"fullname":   user.FullName,
-		"password":   user.Password,
-		"age":        user.Age,
-		"gender":     user.Gender,
-		"phone":      user.Phone,
-		"active":     user.IsActive,
-		"Role":       user.Role,
-		"UpdateDate": currentTime,
+		"email":     user.Email,
+		"firstname": user.FirstName,
+		"lastname":  user.LastName,
+		"password":  user.Password,
+		"age":       user.Age,
+		"gender":    user.Gender,
+		"phone":     user.Phone,
+		"isactive":  user.IsActive,
+		"role":      user.Role,
+		"updateat":  updateAt,
 	}
 
 	result, err := userCollection.UpdateOne(ctx, bson.M{"id": objId}, bson.M{"$set": updateUser})
