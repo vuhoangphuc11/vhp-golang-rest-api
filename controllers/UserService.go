@@ -1,18 +1,18 @@
-package services
+package controllers
 
 import (
 	"context"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"github.com/vuhoangphuc11/vhp-golang-rest-api/configs"
+	"github.com/vuhoangphuc11/vhp-golang-rest-api/models"
+	"github.com/vuhoangphuc11/vhp-golang-rest-api/responses"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"time"
-
-	"github.com/vuhoangphuc11/vhp-golang-rest-api/pkg/configs"
-	"github.com/vuhoangphuc11/vhp-golang-rest-api/pkg/models"
-	"github.com/vuhoangphuc11/vhp-golang-rest-api/pkg/responses"
 )
 
 var userCollection *mongo.Collection = configs.GetCollection(configs.DB, "user")
@@ -35,12 +35,15 @@ func CreateUser(c *fiber.Ctx) error {
 		return c.Status(http.StatusBadRequest).JSON(responses.ResponseData{Status: http.StatusBadRequest, Message: "error", Data: &fiber.Map{"data": validationErr.Error()}})
 	}
 
+	password, _ := bcrypt.GenerateFromPassword([]byte(user.Password), 12)
+
 	newUser := models.User{
 		Id:        primitive.NewObjectID(),
+		Username:  user.Username,
 		Email:     user.Email,
 		FirstName: user.FirstName,
 		LastName:  user.LastName,
-		Password:  user.Password,
+		Password:  string(password),
 		Age:       user.Age,
 		Gender:    user.Gender,
 		Phone:     user.Phone,
