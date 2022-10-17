@@ -7,6 +7,7 @@ import (
 	"github.com/vuhoangphuc11/vhp-golang-rest-api/configs"
 	"github.com/vuhoangphuc11/vhp-golang-rest-api/models"
 	"github.com/vuhoangphuc11/vhp-golang-rest-api/responses"
+	"github.com/vuhoangphuc11/vhp-golang-rest-api/util"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -33,6 +34,16 @@ func CreateUser(c *fiber.Ctx) error {
 	//use the validator library to validate required fields
 	if validationErr := validate.Struct(&user); validationErr != nil {
 		return c.Status(http.StatusBadRequest).JSON(responses.ResponseData{Status: http.StatusBadRequest, Message: "error", Data: &fiber.Map{"data": validationErr.Error()}})
+	}
+
+	if !checkPatternEmail(user.Email) {
+		return c.Status(http.StatusBadRequest).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: "error", Data: &fiber.Map{"data": "Invalid email, please try again!"}})
+	}
+
+	findUser := userCollection.FindOne(ctx, bson.M{"username": user.Username}).Decode(&user)
+
+	if !util.ErrorIsNil(findUser) {
+		return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: util.Error, Data: &fiber.Map{util.Data: "Account already exists!"}})
 	}
 
 	password, _ := bcrypt.GenerateFromPassword([]byte(user.Password), 12)

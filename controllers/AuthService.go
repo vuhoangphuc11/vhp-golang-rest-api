@@ -14,6 +14,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"io"
 	"net/http"
+	"net/mail"
 	"net/smtp"
 	"time"
 )
@@ -76,6 +77,9 @@ func RegisterAccount(c *fiber.Ctx) error {
 	if util.IsEmpty(email) {
 		return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: util.Error, Data: &fiber.Map{util.Data: "Please enter your email!"}})
 	}
+	if !checkPatternEmail(email) {
+		return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: util.Error, Data: &fiber.Map{util.Data: "Invalid email, please try again!"}})
+	}
 	if util.IsEmpty(password) {
 		return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: util.Error, Data: &fiber.Map{util.Data: "Please enter your password!"}})
 	}
@@ -108,7 +112,7 @@ func RegisterAccount(c *fiber.Ctx) error {
 
 	err := userCollection.FindOne(ctx, bson.M{"username": username}).Decode(&user)
 
-	if err == nil {
+	if !util.ErrorIsNil(err) {
 		return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: util.Error, Data: &fiber.Map{util.Data: "Account already exists!"}})
 	}
 
@@ -124,17 +128,13 @@ func RegisterAccount(c *fiber.Ctx) error {
 
 func ForgotPassword(c *fiber.Ctx) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	code := EncodeToString(6)
+	code := encodeToString(6)
 	username := c.FormValue("username")
-	email := c.FormValue("email")
 	var user models.User
 	defer cancel()
 
 	if util.IsEmpty(username) {
 		return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: util.Error, Data: &fiber.Map{util.Data: "Please enter your username!"}})
-	}
-	if util.IsEmpty(email) {
-		return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: util.Error, Data: &fiber.Map{util.Data: "Please enter your email!"}})
 	}
 
 	err := userCollection.FindOne(ctx, bson.M{"username": username}).Decode(&user)
@@ -143,23 +143,28 @@ func ForgotPassword(c *fiber.Ctx) error {
 		return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: util.Error, Data: &fiber.Map{util.Data: "Account not exists!"}})
 	}
 
+	newPass, _ := bcrypt.GenerateFromPassword([]byte(code), 12)
+
+	_, updatePass := userCollection.UpdateOne(ctx, bson.M{"username": username}, bson.M{"$set": bson.M{"password": newPass}})
+
+	if util.ErrorIsNil(updatePass) {
+		return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: util.Error, Data: &fiber.Map{util.Data: "Reset password fail!"}})
+	}
+
 	// Sender data.
 	from := "phucvhps12860@fpt.edu.vn"
 	password := "pbqrhwveiavkjvyq"
-	subject := "[Reset password for user by VHP]"
-	body := "Reset password for account " + username + ".\nNew Pass: " + code
+	subject := "[Reset password by VHP]"
+	body := "Reset password for account " + username + ".\nNew password: " + code
 
 	// Receiver email address.
 	to := []string{
-		email,
+		user.Email,
 	}
 
 	// smtp server configuration.
 	smtpHost := "smtp.gmail.com"
 	smtpPort := "587"
-
-	// Message.
-	//message := []byte("Reset password for account " + username + " is " + code)
 
 	message := fmt.Sprintf("From: %s\r\n", from)
 	message += fmt.Sprintf("To: %s\r\n", to)
@@ -170,20 +175,14 @@ func ForgotPassword(c *fiber.Ctx) error {
 	auth := smtp.PlainAuth("", from, password, smtpHost)
 
 	// Sending email.
-	sendError := smtp.SendMail(smtpHost+":"+smtpPort, auth, from, to, []byte(message))
-	if sendError != nil {
-		return c.Status(http.StatusBadRequest).JSON(responses.ResponseData{Status: http.StatusBadRequest, Message: util.Error, Data: &fiber.Map{"data": sendError.Error()}})
+	sendMail := smtp.SendMail(smtpHost+":"+smtpPort, auth, from, to, []byte(message))
+	if sendMail != nil {
+		return c.Status(http.StatusBadRequest).JSON(responses.ResponseData{Status: http.StatusBadRequest, Message: util.Error, Data: &fiber.Map{"data": sendMail.Error()}})
 	}
 	return c.Status(http.StatusOK).JSON(responses.ResponseData{Status: http.StatusOK, Message: util.Success, Data: &fiber.Map{"data": "Sent an email reset the password"}})
 }
 
-func Accessible(c *fiber.Ctx) error {
-	return c.SendString("Accessible")
-}
-
-var table = [...]byte{'1', '2', '3', '4', '5', '6', '7', '8', '9', '0'}
-
-func EncodeToString(max int) string {
+func encodeToString(max int) string {
 	b := make([]byte, max)
 	n, err := io.ReadAtLeast(rand.Reader, b, max)
 	if n != max {
@@ -193,4 +192,15 @@ func EncodeToString(max int) string {
 		b[i] = table[int(b[i])%len(table)]
 	}
 	return string(b)
+}
+
+var table = [...]byte{'1', '2', '3', '4', '5', '6', '7', '8', '9', '0'}
+
+func checkPatternEmail(email string) bool {
+	_, err := mail.ParseAddress(email)
+	return err == nil
+}
+
+func Accessible(c *fiber.Ctx) error {
+	return c.SendString("Accessible")
 }
