@@ -144,8 +144,10 @@ func ForgotPassword(c *fiber.Ctx) error {
 	}
 
 	// Sender data.
-	from := "tdtfindme@gmail.com"
-	password := "islworttohdwpxui"
+	from := "phucvhps12860@fpt.edu.vn"
+	password := "pbqrhwveiavkjvyq"
+	subject := "[Reset password for user by VHP]"
+	body := "Reset password for account " + username + ".\nNew Pass: " + code
 
 	// Receiver email address.
 	to := []string{
@@ -157,13 +159,18 @@ func ForgotPassword(c *fiber.Ctx) error {
 	smtpPort := "587"
 
 	// Message.
-	message := []byte("Reset password for account " + username + " is " + code)
+	//message := []byte("Reset password for account " + username + " is " + code)
+
+	message := fmt.Sprintf("From: %s\r\n", from)
+	message += fmt.Sprintf("To: %s\r\n", to)
+	message += fmt.Sprintf("Subject: %s\r\n", subject)
+	message += fmt.Sprintf("\r\n%s\r\n", body)
 
 	// Authentication.
 	auth := smtp.PlainAuth("", from, password, smtpHost)
 
 	// Sending email.
-	sendError := smtp.SendMail(smtpHost+":"+smtpPort, auth, from, to, message)
+	sendError := smtp.SendMail(smtpHost+":"+smtpPort, auth, from, to, []byte(message))
 	if sendError != nil {
 		return c.Status(http.StatusBadRequest).JSON(responses.ResponseData{Status: http.StatusBadRequest, Message: util.Error, Data: &fiber.Map{"data": sendError.Error()}})
 	}

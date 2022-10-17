@@ -9,7 +9,6 @@ require (
 	github.com/joho/godotenv v1.4.0
 	go.mongodb.org/mongo-driver v1.10.3
 	golang.org/x/crypto v0.0.0-20221012134737-56aed061732a
-	gopkg.in/mail.v2 v2.3.1
 )
 
 require (
@@ -31,5 +30,4 @@ require (
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	golang.org/x/sys v0.0.0-20221013171732-95e765b1cc43 // indirect
 	golang.org/x/text v0.3.7 // indirect
-	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 )
