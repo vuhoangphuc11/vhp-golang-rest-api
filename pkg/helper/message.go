@@ -1,4 +1,4 @@
-package util
+package helper
 
 const Error = "error"
 const Success = "success"

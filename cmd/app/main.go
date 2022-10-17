@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/vuhoangphuc11/vhp-golang-rest-api/configs"
-	routes2 "github.com/vuhoangphuc11/vhp-golang-rest-api/routes"
+	"github.com/vuhoangphuc11/vhp-golang-rest-api/internal/routes"
 )
 
 func main() {
@@ -13,8 +13,8 @@ func main() {
 	configs.ConnectDB()
 
 	//vhp: routes
-	routes2.UserRoute(app)
-	routes2.AuthRouter(app)
+	routes.UserRoute(app)
+	routes.AuthRouter(app)
 
 	//vhp: port
 	err := app.Listen(":8087")

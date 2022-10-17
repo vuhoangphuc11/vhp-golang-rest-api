@@ -5,9 +5,9 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/vuhoangphuc11/vhp-golang-rest-api/configs"
-	"github.com/vuhoangphuc11/vhp-golang-rest-api/models"
-	"github.com/vuhoangphuc11/vhp-golang-rest-api/responses"
-	"github.com/vuhoangphuc11/vhp-golang-rest-api/util"
+	"github.com/vuhoangphuc11/vhp-golang-rest-api/internal/models"
+	"github.com/vuhoangphuc11/vhp-golang-rest-api/internal/responses"
+	"github.com/vuhoangphuc11/vhp-golang-rest-api/pkg/helper"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -42,8 +42,8 @@ func CreateUser(c *fiber.Ctx) error {
 
 	findUser := userCollection.FindOne(ctx, bson.M{"username": user.Username}).Decode(&user)
 
-	if !util.ErrorIsNil(findUser) {
-		return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: util.Error, Data: &fiber.Map{util.Data: "Account already exists!"}})
+	if !helper.ErrorIsNil(findUser) {
+		return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: helper.Error, Data: &fiber.Map{helper.Data: "Account already exists!"}})
 	}
 
 	password, _ := bcrypt.GenerateFromPassword([]byte(user.Password), 12)
@@ -105,12 +105,13 @@ func UpdateUser(c *fiber.Ctx) error {
 	if validationErr := validate.Struct(&user); validationErr != nil {
 		return c.Status(http.StatusBadRequest).JSON(responses.ResponseData{Status: http.StatusBadRequest, Message: "error", Data: &fiber.Map{"data": validationErr.Error()}})
 	}
+	bcryptPass, _ := bcrypt.GenerateFromPassword([]byte(user.Password), 12)
 
 	updateUser := bson.M{
 		"email":     user.Email,
 		"firstname": user.FirstName,
 		"lastname":  user.LastName,
-		"password":  user.Password,
+		"password":  bcryptPass,
 		"age":       user.Age,
 		"gender":    user.Gender,
 		"phone":     user.Phone,

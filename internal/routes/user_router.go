@@ -2,10 +2,11 @@ package routes
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/vuhoangphuc11/vhp-golang-rest-api/controllers"
+	"github.com/vuhoangphuc11/vhp-golang-rest-api/internal/controllers"
 )
 
 func UserRoute(app *fiber.App) {
+	//vhp: User router
 	app.Get("/api/user", controllers.GetAllUser)
 	app.Get("/api/user/get-all", controllers.GetAllUser)
 	app.Get("/api/user/get-user/:userId", controllers.GetUserById)
