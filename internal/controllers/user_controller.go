@@ -105,13 +105,13 @@ func UpdateUser(c *fiber.Ctx) error {
 	if validationErr := validate.Struct(&user); validationErr != nil {
 		return c.Status(http.StatusBadRequest).JSON(responses.ResponseData{Status: http.StatusBadRequest, Message: "error", Data: &fiber.Map{"data": validationErr.Error()}})
 	}
-	bcryptPass, _ := bcrypt.GenerateFromPassword([]byte(user.Password), 12)
+	encryptPass, _ := bcrypt.GenerateFromPassword([]byte(user.Password), 12)
 
 	updateUser := bson.M{
 		"email":     user.Email,
 		"firstname": user.FirstName,
 		"lastname":  user.LastName,
-		"password":  bcryptPass,
+		"password":  string(encryptPass),
 		"age":       user.Age,
 		"gender":    user.Gender,
 		"phone":     user.Phone,

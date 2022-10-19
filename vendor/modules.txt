@@ -17,13 +17,22 @@ github.com/gofiber/fiber/v2
 github.com/gofiber/fiber/v2/internal/bytebufferpool
 github.com/gofiber/fiber/v2/internal/colorable
 github.com/gofiber/fiber/v2/internal/dictpool
+github.com/gofiber/fiber/v2/internal/fasttemplate
 github.com/gofiber/fiber/v2/internal/fwd
 github.com/gofiber/fiber/v2/internal/isatty
+github.com/gofiber/fiber/v2/internal/memory
 github.com/gofiber/fiber/v2/internal/msgp
 github.com/gofiber/fiber/v2/internal/schema
 github.com/gofiber/fiber/v2/internal/uuid
+github.com/gofiber/fiber/v2/middleware/basicauth
 github.com/gofiber/fiber/v2/middleware/cors
+github.com/gofiber/fiber/v2/middleware/csrf
+github.com/gofiber/fiber/v2/middleware/limiter
+github.com/gofiber/fiber/v2/middleware/logger
 github.com/gofiber/fiber/v2/utils
+# github.com/gofiber/helmet/v2 v2.2.17
+## explicit; go 1.14
+github.com/gofiber/helmet/v2
 # github.com/golang-jwt/jwt/v4 v4.4.2
 ## explicit; go 1.16
 github.com/golang-jwt/jwt/v4

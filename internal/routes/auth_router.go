@@ -21,5 +21,4 @@ func AuthRouter(app *fiber.App) {
 	}))
 
 	//vhp: Restricted router
-
 }

@@ -22,6 +22,7 @@ import (
 const SecretKey = "WuH0aNqFuc"
 
 func Login(c *fiber.Ctx) error {
+	currentTime := time.Now()
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	username := c.FormValue("username")
 	password := c.FormValue("password")
@@ -44,9 +45,9 @@ func Login(c *fiber.Ctx) error {
 		return c.Status(http.StatusBadRequest).JSON(responses.ResponseData{Status: http.StatusBadRequest, Message: helper.Error, Data: &fiber.Map{"data": "Login failed, please try again!"}})
 	}
 
-	claims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
+	claims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
 		Issuer:    user.Username,
-		ExpiresAt: time.Now().Add(time.Hour * 1).Unix(),
+		ExpiresAt: &jwt.NumericDate{Time: currentTime.Add(time.Hour * 6)},
 	})
 
 	token, err := claims.SignedString([]byte(SecretKey))
@@ -150,7 +151,7 @@ func ForgotPassword(c *fiber.Ctx) error {
 
 	newPass, _ := bcrypt.GenerateFromPassword([]byte(code), 12)
 
-	_, updatePass := userCollection.UpdateOne(ctx, bson.M{"username": username}, bson.M{"$set": bson.M{"password": newPass}})
+	_, updatePass := userCollection.UpdateOne(ctx, bson.M{"username": username}, bson.M{"$set": bson.M{"password": string(newPass)}})
 
 	if helper.ErrorIsNil(updatePass) {
 		return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: helper.Error, Data: &fiber.Map{helper.Data: "Reset password fail!"}})
@@ -163,7 +164,7 @@ func ForgotPassword(c *fiber.Ctx) error {
 	body := "Reset password for account " + username + "." +
 		"\nNew password: " + code +
 		"\n\n\n" +
-		"Vu Hoang Phuc" +
+		"Vu Hoang Phuc\n" +
 		"Golang Developer\n" +
 		"Best regards."
 
@@ -196,7 +197,7 @@ func encodeToString(max int) string {
 	b := make([]byte, max)
 	n, err := io.ReadAtLeast(rand.Reader, b, max)
 	if n != max {
-		fmt.Errorf(err.Error())
+		_ = fmt.Errorf(err.Error())
 	}
 	for i := 0; i < len(b); i++ {
 		b[i] = table[int(b[i])%len(table)]
@@ -213,4 +214,11 @@ func checkPatternEmail(email string) bool {
 
 func Accessible(c *fiber.Ctx) error {
 	return c.SendString("Accessible")
+}
+
+func restricted(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	name := claims["username"].(string)
+	return c.SendString("Welcome " + name)
 }
