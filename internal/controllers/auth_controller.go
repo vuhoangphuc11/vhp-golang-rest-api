@@ -158,8 +158,8 @@ func ForgotPassword(c *fiber.Ctx) error {
 	}
 
 	// Sender data.
-	from := "phucvhps12860@fpt.edu.vn"
-	password := "pbqrhwveiavkjvyq"
+	from := ""
+	password := ""
 	subject := "[Reset password by VHP]"
 	body := "Reset password for account " + username + "." +
 		"\nNew password: " + code +
