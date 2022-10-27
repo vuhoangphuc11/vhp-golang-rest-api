@@ -1,0 +1,5 @@
+vhp_logs.log
+.idea
+go.mod
+modified
+vendor\*
