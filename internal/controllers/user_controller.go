@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/vuhoangphuc11/vhp-golang-rest-api/configs"
 	"github.com/vuhoangphuc11/vhp-golang-rest-api/internal/models"
 	"github.com/vuhoangphuc11/vhp-golang-rest-api/internal/responses"
@@ -185,4 +186,15 @@ func GetAllUser(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(
 		responses.ResponseData{Status: http.StatusOK, Message: "success", Data: &fiber.Map{"data": users}},
 	)
+}
+
+func HelloUser(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	username := claims["name"].(string)
+	return c.Status(http.StatusOK).JSON(responses.ResponseData{
+		Status:  http.StatusOK,
+		Message: helper.Success,
+		Data:    &fiber.Map{"message": "Hello " + username},
+	})
 }

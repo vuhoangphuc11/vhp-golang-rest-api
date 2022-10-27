@@ -7,10 +7,16 @@ import (
 
 func UserRoute(app *fiber.App) {
 	//vhp: User router
-	app.Get("/api/user", controllers.GetAllUser)
+	app.Get("/api/user/hello", controllers.AuthReq(), controllers.HelloUser)
 	app.Get("/api/user/get-all", controllers.GetAllUser)
 	app.Get("/api/user/get-user/:userId", controllers.GetUserById)
-	app.Post("/api/user/create-user", controllers.CreateUser)
-	app.Put("/api/user/update-user/:userId", controllers.UpdateUser)
-	app.Delete("/api/user/delete-user/:userId", controllers.DeleteUser)
+
+	//vhp: JWT Middleware
+	//app.Use(jwtware.New(jwtware.Config{
+	//	SigningKey: []byte("secret"),
+	//}))
+
+	app.Post("/api/user/create-user", controllers.AuthReq(), controllers.CreateUser)
+	app.Put("/api/user/update-user/:userId", controllers.AuthReq(), controllers.UpdateUser)
+	app.Delete("/api/user/delete-user/:userId", controllers.AuthReq(), controllers.DeleteUser)
 }

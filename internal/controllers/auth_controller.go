@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
+	jwtware "github.com/gofiber/jwt/v3"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/vuhoangphuc11/vhp-golang-rest-api/internal/models"
 	"github.com/vuhoangphuc11/vhp-golang-rest-api/internal/responses"
@@ -22,7 +23,7 @@ import (
 const SecretKey = "WuH0aNqFuc"
 
 func Login(c *fiber.Ctx) error {
-	currentTime := time.Now()
+	//currentTime := time.Now()
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	username := c.FormValue("username")
 	password := c.FormValue("password")
@@ -45,12 +46,23 @@ func Login(c *fiber.Ctx) error {
 		return c.Status(http.StatusBadRequest).JSON(responses.ResponseData{Status: http.StatusBadRequest, Message: helper.Error, Data: &fiber.Map{"data": "Login failed, please try again!"}})
 	}
 
-	claims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
-		Issuer:    user.Username,
-		ExpiresAt: &jwt.NumericDate{Time: currentTime.Add(time.Hour * 6)},
-	})
+	fullName := user.FirstName + " " + user.LastName
 
-	token, err := claims.SignedString([]byte(SecretKey))
+	// Create the Claims
+	claims := jwt.MapClaims{
+		"name": fullName,
+		"role": user.Role,
+		"exp":  time.Now().Add(time.Hour * 72).Unix(),
+	}
+
+	// Create token
+	createToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	// Generate encoded token and send it as response.
+	token, err := createToken.SignedString([]byte("secret"))
+	if err != nil {
+		return c.SendStatus(fiber.StatusInternalServerError)
+	}
 
 	if helper.ErrorIsNil(err) {
 		return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: helper.Error, Data: &fiber.Map{helper.Data: err.Error()}})
@@ -212,13 +224,11 @@ func checkPatternEmail(email string) bool {
 	return err == nil
 }
 
-func Accessible(c *fiber.Ctx) error {
-	return c.SendString("Accessible")
-}
-
-func restricted(c *fiber.Ctx) error {
-	user := c.Locals("user").(*jwt.Token)
-	claims := user.Claims.(jwt.MapClaims)
-	name := claims["username"].(string)
-	return c.SendString("Welcome " + name)
+func AuthReq() func(c *fiber.Ctx) error {
+	return jwtware.New(jwtware.Config{
+		ErrorHandler: func(c *fiber.Ctx, err error) error {
+			return c.Status(http.StatusUnauthorized).JSON(responses.ResponseData{Status: http.StatusUnauthorized, Message: helper.Error, Data: &fiber.Map{"message": "Unauthorized"}})
+		},
+		SigningKey: []byte("secret"),
+	})
 }
