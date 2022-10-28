@@ -74,6 +74,7 @@ func CreateUser(c *fiber.Ctx) error {
 
 func GetUserById(c *fiber.Ctx) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+
 	userId := c.Params("userId")
 	var user models.User
 	defer cancel()
@@ -198,3 +199,35 @@ func HelloUser(c *fiber.Ctx) error {
 		Data:    &fiber.Map{"message": "Hello " + username},
 	})
 }
+
+func Test1(c *fiber.Ctx) error {
+
+	return c.SendString("pass")
+}
+
+//func AuthorReq(c *fiber.Ctx, listRole []string) bool {
+//	user := c.Locals("user").(*jwt.Token)
+//	claims := user.Claims.(jwt.MapClaims)
+//	role := claims["role"].(string)
+//
+//	for _, v := range listRole {
+//		if v == role {
+//			return true
+//		}
+//	}
+//	return false
+//}
+
+//func AuthorReq(c *fiber.Ctx, listRole []string) error {
+//
+//
+//	if temp := c.Get("user"); temp != nil {
+//		u := temp.(*jwt.Token)
+//		claims := u.Claims.(jwt.MapClaims)
+//		for _, item := listRole{
+//			if c.Request().RequestURI == item && claims["role"] != "admin" {
+//				return c.JSON(http.StatusUnauthorized, "Role not suitable for function.")
+//			}
+//		}
+//	}
+//}

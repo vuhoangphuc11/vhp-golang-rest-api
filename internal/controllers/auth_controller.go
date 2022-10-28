@@ -52,16 +52,16 @@ func Login(c *fiber.Ctx) error {
 	claims := jwt.MapClaims{
 		"name": fullName,
 		"role": user.Role,
-		"exp":  time.Now().Add(time.Hour * 72).Unix(),
+		"exp":  time.Now().Add(time.Hour * 6).Unix(),
 	}
 
 	// Create token
 	createToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	// Generate encoded token and send it as response.
-	token, err := createToken.SignedString([]byte("secret"))
+	token, err := createToken.SignedString([]byte(SecretKey))
 	if err != nil {
-		return c.SendStatus(fiber.StatusInternalServerError)
+		return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: helper.Error, Data: &fiber.Map{helper.Data: err.Error()}})
 	}
 
 	if helper.ErrorIsNil(err) {
@@ -170,8 +170,8 @@ func ForgotPassword(c *fiber.Ctx) error {
 	}
 
 	// Sender data.
-	from := ""
-	password := ""
+	from := "phucvhps12860@fpt.edu.vn"
+	password := "wjlchvzsliyanklh"
 	subject := "[Reset password by VHP]"
 	body := "Reset password for account " + username + "." +
 		"\nNew password: " + code +
@@ -229,6 +229,30 @@ func AuthReq() func(c *fiber.Ctx) error {
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			return c.Status(http.StatusUnauthorized).JSON(responses.ResponseData{Status: http.StatusUnauthorized, Message: helper.Error, Data: &fiber.Map{"message": "Unauthorized"}})
 		},
-		SigningKey: []byte("secret"),
+		SigningKey: []byte(SecretKey),
 	})
+}
+
+//func AuthorReq(listRole []string) func(c *fiber.Ctx) error {
+//	return jwtware.New(jwtware.Config{
+//		ErrorHandler: func(c *fiber.Ctx, err error) error {
+//			return c.Status(http.StatusUnauthorized).JSON(responses.ResponseData{Status: http.StatusUnauthorized, Message: helper.Error, Data: &fiber.Map{"message": "Unauthorized"}})
+//		},
+//		SigningKey: []byte(SecretKey),
+//	})
+//}
+
+func AuthorReq(listRole ...string) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		user := c.Locals("user").(*jwt.Token)
+		claims := user.Claims.(jwt.MapClaims)
+		role := claims["role"].(string)
+
+		for _, v := range listRole {
+			if v == role {
+				return c.Next()
+			}
+		}
+		return c.Status(http.StatusUnauthorized).JSON(responses.ResponseData{Status: http.StatusUnauthorized, Message: helper.Error, Data: &fiber.Map{"message": "Unauthorized"}})
+	}
 }
