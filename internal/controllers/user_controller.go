@@ -29,16 +29,16 @@ func CreateUser(c *fiber.Ctx) error {
 
 	//validate the request body
 	if err := c.BodyParser(&user); err != nil {
-		return c.Status(http.StatusBadRequest).JSON(responses.ResponseData{Status: http.StatusBadRequest, Message: "error", Data: &fiber.Map{"data": err.Error()}})
+		return c.Status(http.StatusBadRequest).JSON(responses.ResponseData{Status: http.StatusBadRequest, Message: helper.Error, Data: &fiber.Map{"data": err.Error()}})
 	}
 
 	//use the validator library to validate required fields
 	if validationErr := validate.Struct(&user); validationErr != nil {
-		return c.Status(http.StatusBadRequest).JSON(responses.ResponseData{Status: http.StatusBadRequest, Message: "error", Data: &fiber.Map{"data": validationErr.Error()}})
+		return c.Status(http.StatusBadRequest).JSON(responses.ResponseData{Status: http.StatusBadRequest, Message: helper.Error, Data: &fiber.Map{"data": validationErr.Error()}})
 	}
 
 	if !checkPatternEmail(user.Email) {
-		return c.Status(http.StatusBadRequest).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: "error", Data: &fiber.Map{"data": "Invalid email, please try again!"}})
+		return c.Status(http.StatusBadRequest).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: helper.Error, Data: &fiber.Map{"data": "Invalid email, please try again!"}})
 	}
 
 	findUser := userCollection.FindOne(ctx, bson.M{"username": user.Username}).Decode(&user)
@@ -66,10 +66,10 @@ func CreateUser(c *fiber.Ctx) error {
 
 	result, err := userCollection.InsertOne(ctx, newUser)
 	if err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: "error", Data: &fiber.Map{"data": err.Error()}})
+		return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: helper.Error, Data: &fiber.Map{"data": err.Error()}})
 	}
 
-	return c.Status(http.StatusCreated).JSON(responses.ResponseData{Status: http.StatusCreated, Message: "success", Data: &fiber.Map{"data": result}})
+	return c.Status(http.StatusCreated).JSON(responses.ResponseData{Status: http.StatusCreated, Message: helper.Success, Data: &fiber.Map{"data": result}})
 }
 
 func GetUserById(c *fiber.Ctx) error {
@@ -83,10 +83,10 @@ func GetUserById(c *fiber.Ctx) error {
 
 	err := userCollection.FindOne(ctx, bson.M{"id": objId}).Decode(&user)
 	if err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: "error", Data: &fiber.Map{"data": err.Error()}})
+		return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: helper.Error, Data: &fiber.Map{"data": err.Error()}})
 	}
 
-	return c.Status(http.StatusOK).JSON(responses.ResponseData{Status: http.StatusOK, Message: "success", Data: &fiber.Map{"data": user}})
+	return c.Status(http.StatusOK).JSON(responses.ResponseData{Status: http.StatusOK, Message: helper.Success, Data: &fiber.Map{"data": user}})
 }
 
 func UpdateUser(c *fiber.Ctx) error {
@@ -98,14 +98,18 @@ func UpdateUser(c *fiber.Ctx) error {
 
 	objId, _ := primitive.ObjectIDFromHex(userId)
 
+	if !checkPatternEmail(user.Email) {
+		return c.Status(http.StatusBadRequest).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: helper.Error, Data: &fiber.Map{"data": "Invalid email, please try again!"}})
+	}
+
 	//validate the request body
 	if err := c.BodyParser(&user); err != nil {
-		return c.Status(http.StatusBadRequest).JSON(responses.ResponseData{Status: http.StatusBadRequest, Message: "error", Data: &fiber.Map{"data": err.Error()}})
+		return c.Status(http.StatusBadRequest).JSON(responses.ResponseData{Status: http.StatusBadRequest, Message: helper.Error, Data: &fiber.Map{"data": err.Error()}})
 	}
 
 	//use the validator library to validate required fields
 	if validationErr := validate.Struct(&user); validationErr != nil {
-		return c.Status(http.StatusBadRequest).JSON(responses.ResponseData{Status: http.StatusBadRequest, Message: "error", Data: &fiber.Map{"data": validationErr.Error()}})
+		return c.Status(http.StatusBadRequest).JSON(responses.ResponseData{Status: http.StatusBadRequest, Message: helper.Error, Data: &fiber.Map{"data": validationErr.Error()}})
 	}
 	encryptPass, _ := bcrypt.GenerateFromPassword([]byte(user.Password), 12)
 
@@ -125,7 +129,7 @@ func UpdateUser(c *fiber.Ctx) error {
 	result, err := userCollection.UpdateOne(ctx, bson.M{"id": objId}, bson.M{"$set": updateUser})
 
 	if err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: "error", Data: &fiber.Map{"data": err.Error()}})
+		return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: helper.Error, Data: &fiber.Map{"data": err.Error()}})
 	}
 	//get updated user details
 	var updatedUser models.User
@@ -133,11 +137,11 @@ func UpdateUser(c *fiber.Ctx) error {
 		err := userCollection.FindOne(ctx, bson.M{"id": objId}).Decode(&updatedUser)
 
 		if err != nil {
-			return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: "error", Data: &fiber.Map{"data": err.Error()}})
+			return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: helper.Error, Data: &fiber.Map{"data": err.Error()}})
 		}
 	}
 
-	return c.Status(http.StatusOK).JSON(responses.ResponseData{Status: http.StatusOK, Message: "success", Data: &fiber.Map{"data": updatedUser}})
+	return c.Status(http.StatusOK).JSON(responses.ResponseData{Status: http.StatusOK, Message: helper.Success, Data: &fiber.Map{"data": updatedUser}})
 }
 func DeleteUser(c *fiber.Ctx) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -148,17 +152,17 @@ func DeleteUser(c *fiber.Ctx) error {
 
 	result, err := userCollection.DeleteOne(ctx, bson.M{"id": objId})
 	if err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: "error", Data: &fiber.Map{"data": err.Error()}})
+		return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: helper.Error, Data: &fiber.Map{"data": err.Error()}})
 	}
 
 	if result.DeletedCount < 1 {
 		return c.Status(http.StatusNotFound).JSON(
-			responses.ResponseData{Status: http.StatusNotFound, Message: "error", Data: &fiber.Map{"data": "User with specified ID not found!"}},
+			responses.ResponseData{Status: http.StatusNotFound, Message: helper.Error, Data: &fiber.Map{"data": "User with specified ID not found!"}},
 		)
 	}
 
 	return c.Status(http.StatusOK).JSON(
-		responses.ResponseData{Status: http.StatusOK, Message: "success", Data: &fiber.Map{"data": "User successfully deleted!"}},
+		responses.ResponseData{Status: http.StatusOK, Message: helper.Success, Data: &fiber.Map{"data": "User successfully deleted!"}},
 	)
 }
 
@@ -170,7 +174,7 @@ func GetAllUser(c *fiber.Ctx) error {
 	results, err := userCollection.Find(ctx, bson.M{})
 
 	if err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: "error", Data: &fiber.Map{"data": err.Error()}})
+		return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: helper.Error, Data: &fiber.Map{"data": err.Error()}})
 	}
 
 	//reading from the db in an optimal way
@@ -178,14 +182,14 @@ func GetAllUser(c *fiber.Ctx) error {
 	for results.Next(ctx) {
 		var singleUser models.User
 		if err = results.Decode(&singleUser); err != nil {
-			return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: "error", Data: &fiber.Map{"data": err.Error()}})
+			return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: helper.Error, Data: &fiber.Map{"data": err.Error()}})
 		}
 
 		users = append(users, singleUser)
 	}
 
 	return c.Status(http.StatusOK).JSON(
-		responses.ResponseData{Status: http.StatusOK, Message: "success", Data: &fiber.Map{"data": users}},
+		responses.ResponseData{Status: http.StatusOK, Message: helper.Success, Data: &fiber.Map{"data": users}},
 	)
 }
 
@@ -201,33 +205,5 @@ func HelloUser(c *fiber.Ctx) error {
 }
 
 func Test1(c *fiber.Ctx) error {
-
-	return c.SendString("pass")
+	return c.SendString("Test ngon ngon`")
 }
-
-//func AuthorReq(c *fiber.Ctx, listRole []string) bool {
-//	user := c.Locals("user").(*jwt.Token)
-//	claims := user.Claims.(jwt.MapClaims)
-//	role := claims["role"].(string)
-//
-//	for _, v := range listRole {
-//		if v == role {
-//			return true
-//		}
-//	}
-//	return false
-//}
-
-//func AuthorReq(c *fiber.Ctx, listRole []string) error {
-//
-//
-//	if temp := c.Get("user"); temp != nil {
-//		u := temp.(*jwt.Token)
-//		claims := u.Claims.(jwt.MapClaims)
-//		for _, item := listRole{
-//			if c.Request().RequestURI == item && claims["role"] != "admin" {
-//				return c.JSON(http.StatusUnauthorized, "Role not suitable for function.")
-//			}
-//		}
-//	}
-//}
