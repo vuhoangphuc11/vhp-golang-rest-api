@@ -12,5 +12,9 @@ func AuthRouter(app *fiber.App) {
 	app.Post("/api/auth/login", controllers.Login)
 	app.Post("/api/auth/register", controllers.RegisterAccount)
 	app.Post("/api/auth/forgot-password", controllers.ForgotPassword)
-	app.Post("/api/auth/change-password", middleware.AuthorReq(helper.Admin, helper.Manager, helper.User), controllers.ChangePassword())
+	app.Post("/api/auth/change-password", middleware.AuthReq(), middleware.AuthorReq(helper.Admin, helper.Manager, helper.User), controllers.ChangePassword)
+
+	//app.Get("/api/user/send-otp", controllers.SendOtp)
+	//app.Get("/api/user/check-otp", controllers.CheckOtp)
+
 }

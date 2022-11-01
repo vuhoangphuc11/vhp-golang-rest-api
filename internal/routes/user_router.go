@@ -15,5 +15,7 @@ func UserRoute(app *fiber.App) {
 	app.Post("/api/user/create-user", middleware.AuthReq(), middleware.AuthorReq(helper.Admin, helper.Manager), controllers.CreateUser)
 	app.Put("/api/user/update-user/:userId", middleware.AuthReq(), middleware.AuthorReq(helper.Admin, helper.Manager, helper.User), controllers.UpdateUser)
 	app.Delete("/api/user/delete-user/:userId", middleware.AuthReq(), middleware.AuthorReq(helper.Admin), controllers.DeleteUser)
-	app.Post("/api/user/test", middleware.AuthReq(), middleware.AuthorReq(helper.Admin), controllers.Test1)
+	app.Get("/api/user/export-user-active", middleware.AuthReq(), middleware.AuthorReq(helper.Admin, helper.Manager, helper.User), controllers.ExportUserActive)
+
+	//app.Post("/api/user/test", middleware.AuthReq(), middleware.AuthorReq(helper.Admin, helper.Manager, helper.User), controllers.GetListUserIsActive)
 }

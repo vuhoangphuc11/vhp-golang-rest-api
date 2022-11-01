@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/vuhoangphuc11/vhp-golang-rest-api/configs"
@@ -15,7 +16,7 @@ func main() {
 	app := fiber.New()
 
 	//vhp: Define file to logs
-	file, er := os.OpenFile("./vhp_logs.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	file, er := os.OpenFile(os.Getenv("LOG_FILE_NAME"), os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if er != nil {
 		log.Fatalf("error opening file: %v", er)
 	}
@@ -30,6 +31,8 @@ func main() {
 	app.Use(
 		logger.New(loggerConfig), // add Logger middleware with config
 	)
+
+	app.Use(cors.New())
 
 	//vhp: limit req
 	limit := limiter.Config{
@@ -47,7 +50,7 @@ func main() {
 	routes.AuthRouter(app)
 
 	//vhp: port
-	err := app.Listen(":8087")
+	err := app.Listen(os.Getenv("PORT"))
 	if err != nil {
 		return
 	}

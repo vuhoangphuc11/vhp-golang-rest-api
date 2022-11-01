@@ -13,6 +13,9 @@ import (
 func AuthReq() func(c *fiber.Ctx) error {
 	return jwtware.New(jwtware.Config{
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
+			if err.Error() == "Token is expired" {
+				return c.Status(http.StatusUnauthorized).JSON(responses.ResponseData{Status: http.StatusUnauthorized, Message: helper.Error, Data: &fiber.Map{"message": "Token is expired!"}})
+			}
 			return c.Status(http.StatusUnauthorized).JSON(responses.ResponseData{Status: http.StatusUnauthorized, Message: helper.Error, Data: &fiber.Map{"message": "Unauthorized!"}})
 		},
 		SigningKey: []byte(controllers.SecretKey),

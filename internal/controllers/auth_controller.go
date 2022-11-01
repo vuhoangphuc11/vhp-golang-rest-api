@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"net/mail"
 	"net/smtp"
+	"os"
 	"time"
 )
 
@@ -38,7 +39,7 @@ func Login(c *fiber.Ctx) error {
 
 	err := userCollection.FindOne(ctx, bson.M{"username": username}).Decode(&user)
 	if helper.ErrorIsNil(err) {
-		return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: helper.Error, Data: &fiber.Map{helper.Data: "Username not found!"}})
+		return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: helper.Error, Data: &fiber.Map{helper.Data: "  not found!"}})
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); helper.ErrorIsNil(err) {
@@ -61,6 +62,7 @@ func Login(c *fiber.Ctx) error {
 
 	// Generate encoded token and send it as response.
 	token, err := createToken.SignedString([]byte(SecretKey))
+
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: helper.Error, Data: &fiber.Map{helper.Data: err.Error()}})
 	}
@@ -132,7 +134,7 @@ func RegisterAccount(c *fiber.Ctx) error {
 	err := userCollection.FindOne(ctx, bson.M{"username": username}).Decode(&user)
 
 	if !helper.ErrorIsNil(err) {
-		return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: helper.Error, Data: &fiber.Map{helper.Data: "Account already exists!"}})
+		return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: helper.Error, Data: &fiber.Map{helper.Data: "Username already exists!"}})
 	}
 
 	result, err := userCollection.InsertOne(ctx, newUser)
@@ -178,7 +180,7 @@ func ForgotPassword(c *fiber.Ctx) error {
 		"Golang Developer\n" +
 		"Best regards."
 
-	sendNewPassword := SendMail(user.Email, body, subject)
+	sendNewPassword := SendMail(user.Email, subject, body)
 
 	if !sendNewPassword {
 		return c.Status(http.StatusBadRequest).JSON(responses.ResponseData{Status: http.StatusBadRequest, Message: helper.Error, Data: &fiber.Map{"data": "There was an error sending the new password to your email, please try again!"}})
@@ -186,50 +188,48 @@ func ForgotPassword(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(responses.ResponseData{Status: http.StatusOK, Message: helper.Success, Data: &fiber.Map{"data": "Sent an email reset the password"}})
 }
 
-func ChangePassword() fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		userInToken := c.Locals("user").(*jwt.Token)
-		claims := userInToken.Claims.(jwt.MapClaims)
-		username := claims["username"].(string)
-		email := claims["email"].(string)
+func ChangePassword(c *fiber.Ctx) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	userInToken := c.Locals("user").(*jwt.Token)
+	claims := userInToken.Claims.(jwt.MapClaims)
+	username := claims["username"].(string)
+	email := claims["email"].(string)
 
-		passwordChange := c.Params("password")
-		confirmPasswordChange := c.FormValue("confirm_password")
-		defer cancel()
+	passwordChange := c.FormValue("password")
+	confirmPasswordChange := c.FormValue("confirm_password")
+	defer cancel()
 
-		if helper.IsEmpty(passwordChange) {
-			return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: helper.Error, Data: &fiber.Map{helper.Data: "Please enter your password!"}})
-		}
-		if helper.IsEmpty(confirmPasswordChange) {
-			return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: helper.Error, Data: &fiber.Map{helper.Data: "Please enter confirm password!"}})
-		}
-
-		if helper.NotMatch(passwordChange, confirmPasswordChange) {
-			return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: helper.Error, Data: &fiber.Map{helper.Data: "Password and confirm Password not match!"}})
-		}
-
-		passwordNew, _ := bcrypt.GenerateFromPassword([]byte(passwordChange), 12)
-
-		_, updatePass := userCollection.UpdateOne(ctx, bson.M{"username": username}, bson.M{"$set": bson.M{"password": string(passwordNew)}})
-
-		if helper.ErrorIsNil(updatePass) {
-			return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: helper.Error, Data: &fiber.Map{helper.Data: "Password change failed, please try again!"}})
-		}
-		subject := "[Change password by VHP]"
-		body := "Your password of " + username + "." +
-			"\nJust changed at" +
-			"\n\n\n" +
-			"Vu Hoang Phuc\n" +
-			"Golang Developer\n" +
-			"Best regards."
-
-		mailChangePass := SendMail(email, subject, body)
-		if !mailChangePass {
-			return c.Status(http.StatusBadRequest).JSON(responses.ResponseData{Status: http.StatusBadRequest, Message: helper.Error, Data: &fiber.Map{"data": "There was an error sending the new password to your email, please try again!"}})
-		}
-		return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusCreated, Message: helper.Success, Data: &fiber.Map{helper.Data: "Change password successfully!"}})
+	if helper.IsEmpty(passwordChange) {
+		return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: helper.Error, Data: &fiber.Map{helper.Data: "Please enter your password!"}})
 	}
+	if helper.IsEmpty(confirmPasswordChange) {
+		return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: helper.Error, Data: &fiber.Map{helper.Data: "Please enter confirm password!"}})
+	}
+
+	if helper.NotMatch(passwordChange, confirmPasswordChange) {
+		return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: helper.Error, Data: &fiber.Map{helper.Data: "Password and confirm Password not match!"}})
+	}
+
+	passwordNew, _ := bcrypt.GenerateFromPassword([]byte(passwordChange), 12)
+
+	_, updatePass := userCollection.UpdateOne(ctx, bson.M{"username": username}, bson.M{"$set": bson.M{"password": string(passwordNew)}})
+
+	if helper.ErrorIsNil(updatePass) {
+		return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: helper.Error, Data: &fiber.Map{helper.Data: "Password change failed, please try again!"}})
+	}
+	subject := "[Change password by VHP]"
+	body := "Your password of account: " + username + "." +
+		"\nJust changed" +
+		"\n\n\n" +
+		"Vu Hoang Phuc\n" +
+		"Golang Developer\n" +
+		"Best regards."
+
+	mailChangePass := SendMail(email, subject, body)
+	if !mailChangePass {
+		return c.Status(http.StatusBadRequest).JSON(responses.ResponseData{Status: http.StatusBadRequest, Message: helper.Error, Data: &fiber.Map{"data": "There was an error sending the new password to your email, please try again!"}})
+	}
+	return c.Status(http.StatusOK).JSON(responses.ResponseData{Status: http.StatusOK, Message: helper.Success, Data: &fiber.Map{helper.Data: "Change password successfully!"}})
 }
 
 func encodeToString(max int) string {
@@ -253,8 +253,9 @@ func checkPatternEmail(email string) bool {
 
 func SendMail(email, subject, body string) bool {
 	// Sender data.
-	from := "phucvhps12860@fpt.edu.vn"
-	password := "wjlchvzsliyanklh"
+	from := os.Getenv("EMAIL")
+	password := os.Getenv("PASSWORD")
+
 	to := []string{
 		email,
 	}
@@ -280,3 +281,47 @@ func SendMail(email, subject, body string) bool {
 	}
 	return true
 }
+
+//var TWILIO_ACCOUNT_SID string = os.Getenv("TWILIO_ACCOUNT_SID")
+//var TWILIO_AUTH_TOKEN string = os.Getenv("TWILIO_AUTH_TOKEN")
+//var VERIFY_SERVICE_SID string = os.Getenv("VERIFY_SERVICE_SID")
+//var client *twilio.RestClient = twilio.NewRestClientWithParams(twilio.ClientParams{
+//	Username: TWILIO_ACCOUNT_SID,
+//	Password: TWILIO_AUTH_TOKEN,
+//})
+
+//func SendOtp(c *fiber.Ctx) error {
+//	to := c.FormValue("your_phone")
+//	params := &openapi.CreateVerificationParams{}
+//	params.SetTo(to)
+//	params.SetChannel("sms")
+//
+//	_, err := client.VerifyV2.CreateVerification(VERIFY_SERVICE_SID, params)
+//
+//	if err != nil {
+//		return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: helper.Error, Data: &fiber.Map{helper.Data: "Can't send OTP to " + to + ", please try again!"}})
+//	} else {
+//		return c.Status(http.StatusOK).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: helper.Success, Data: &fiber.Map{helper.Data: "Sent verification"}})
+//	}
+//}
+//
+//func CheckOtp(c *fiber.Ctx) error {
+//	var code string
+//	to := c.FormValue("your_code")
+//	fmt.Println("Please check your phone and enter the code:")
+//	fmt.Scanln(&code)
+//
+//	params := &openapi.CreateVerificationCheckParams{}
+//	params.SetTo(to)
+//	params.SetCode(code)
+//
+//	resp, err := client.VerifyV2.CreateVerificationCheck(VERIFY_SERVICE_SID, params)
+//
+//	if err != nil {
+//		return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: helper.Error, Data: &fiber.Map{helper.Data: "Cannot verify please try again!"}})
+//	} else if *resp.Status == "approved" {
+//		return c.Status(http.StatusOK).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: helper.Success, Data: &fiber.Map{helper.Data: "Correct"}})
+//	} else {
+//		return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: helper.Error, Data: &fiber.Map{helper.Data: "wrong code please try again!"}})
+//	}
+//}
