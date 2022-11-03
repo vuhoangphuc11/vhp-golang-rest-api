@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/gkampitakis/fiber-modules/gracefulshutdown"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
@@ -45,13 +46,17 @@ func main() {
 	//vhp: connect database
 	configs.ConnectDB()
 
-	//vhp: routes
+	//vhp: use routes
 	routes.UserRoute(app)
 	routes.AuthRouter(app)
 
 	//vhp: port
-	err := app.Listen(os.Getenv("PORT"))
-	if err != nil {
-		return
-	}
+	//err := app.Listen(os.Getenv("PORT"))
+	//if err != nil {
+	//	log.Panic(err)
+	//}
+
+	//vhp: Registers graceful shutdown with default config
+	gracefulshutdown.Listen(app, os.Getenv("PORT"), gracefulshutdown.Default())
+
 }
