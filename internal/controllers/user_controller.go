@@ -4,7 +4,8 @@ import (
 	"context"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/vuhoangphuc11/vhp-golang-rest-api/internal/models"
+	"github.com/vuhoangphuc11/vhp-golang-rest-api/internal/dto"
+	"github.com/vuhoangphuc11/vhp-golang-rest-api/internal/entity"
 	"github.com/vuhoangphuc11/vhp-golang-rest-api/internal/responses"
 	"github.com/vuhoangphuc11/vhp-golang-rest-api/internal/services"
 	"github.com/vuhoangphuc11/vhp-golang-rest-api/pkg/helper"
@@ -17,7 +18,7 @@ func CreateUser(c *fiber.Ctx) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	var user models.User
+	var user dto.UserDto
 
 	//validate the request body
 	if err := c.BodyParser(&user); err != nil {
@@ -54,7 +55,7 @@ func GetUserById(c *fiber.Ctx) error {
 	defer cancel()
 
 	username := c.Params("username")
-	var user models.User
+	var user entity.User
 
 	err := services.UserCollection.FindOne(ctx, bson.M{"username": username}).Decode(&user)
 
@@ -70,7 +71,7 @@ func UpdateUser(c *fiber.Ctx) error {
 	defer cancel()
 
 	username := c.Params("username")
-	var user models.User
+	var user entity.User
 
 	//validate the request body
 	if err := c.BodyParser(&user); err != nil {
@@ -86,7 +87,19 @@ func UpdateUser(c *fiber.Ctx) error {
 		return c.Status(http.StatusBadRequest).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: helper.Error, Data: &fiber.Map{helper.Data: helper.MsgInValidFormatEmail}})
 	}
 
-	updateUser := services.PutParamToUpdateUser(user)
+	dto := dto.UserDto{
+		Email:     user.Email,
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
+		Password:  user.Password,
+		Age:       user.Age,
+		Gender:    user.Gender,
+		Phone:     user.Phone,
+		IsActive:  user.IsActive,
+		Role:      user.Role,
+	}
+
+	updateUser := services.PutParamToUpdateUser(dto)
 
 	er := services.UserCollection.FindOne(ctx, bson.M{"username": username}).Decode(&user)
 	if er != nil {
@@ -126,7 +139,7 @@ func GetAllUser(c *fiber.Ctx) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	var users []models.User
+	var users []entity.User
 	results, err := services.UserCollection.Find(ctx, bson.M{})
 
 	if err != nil {
@@ -136,7 +149,7 @@ func GetAllUser(c *fiber.Ctx) error {
 	//reading from the db in an optimal way
 	defer results.Close(ctx)
 	for results.Next(ctx) {
-		var singleUser models.User
+		var singleUser entity.User
 		if err = results.Decode(&singleUser); err != nil {
 			return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: helper.Error, Data: &fiber.Map{helper.Data: err.Error()}})
 		}

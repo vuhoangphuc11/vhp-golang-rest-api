@@ -4,7 +4,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 	jwtware "github.com/gofiber/jwt/v3"
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/vuhoangphuc11/vhp-golang-rest-api/internal/models"
+	"github.com/vuhoangphuc11/vhp-golang-rest-api/internal/dto"
+	"github.com/vuhoangphuc11/vhp-golang-rest-api/internal/entity"
 	"github.com/vuhoangphuc11/vhp-golang-rest-api/internal/responses"
 	"github.com/vuhoangphuc11/vhp-golang-rest-api/internal/services"
 	"github.com/vuhoangphuc11/vhp-golang-rest-api/pkg/helper"
@@ -38,7 +39,7 @@ func AuthorReq(listRole ...string) fiber.Handler {
 	}
 }
 
-func ValidateCreateUser(c *fiber.Ctx, user models.User) (bool, string) {
+func ValidateCreateUser(c *fiber.Ctx, user entity.User) (bool, string) {
 	//validate the request body
 	if parserErr := c.BodyParser(&user); parserErr != nil {
 		return false, parserErr.Error()
@@ -55,56 +56,56 @@ func ValidateCreateUser(c *fiber.Ctx, user models.User) (bool, string) {
 	return true, "success"
 }
 
-func ValidateChangePass(param [2]string) (bool, string) {
-	if helper.IsEmpty(param[0]) {
+func ValidateChangePass(dto dto.UserDto) (bool, string) {
+	if helper.IsEmpty(dto.Password) {
 		return false, helper.MsgInValidPassword
 	}
-	if helper.IsEmpty(param[1]) {
+	if helper.IsEmpty(dto.ConfirmPassword) {
 		return false, helper.MsgInValidConfirmPassword
 	}
-	if helper.NotMatch(param[0], param[1]) {
+	if helper.NotMatch(dto.Password, dto.ConfirmPassword) {
 		return false, helper.MsgInValidConfirmPasswordNotMatch
 	}
 	return true, helper.Success
 }
 
-func ValidateLogin(param [2]string) (bool, string) {
-	if helper.IsEmpty(param[0]) {
+func ValidateLogin(dto dto.UserDto) (bool, string) {
+	if helper.IsEmpty(dto.Username) {
 		return false, helper.MsgInvalidUsername
 	}
-	if helper.IsEmpty(param[1]) {
+	if helper.IsEmpty(dto.Password) {
 		return false, helper.MsgInValidPassword
 	}
 
 	return true, helper.Success
 }
 
-func ValidateRegister(param [7]string) (bool, string) {
-	if helper.IsEmpty(param[0]) {
+func ValidateRegister(dto dto.UserDto) (bool, string) {
+	if helper.IsEmpty(dto.Username) {
 		return false, helper.MsgInvalidUsername
 	}
-	if helper.IsEmpty(param[1]) {
+	if helper.IsEmpty(dto.Email) {
 		return false, helper.MsgInValidEmail
 	}
-	if !helper.CheckPatternEmail(param[1]) {
+	if !helper.CheckPatternEmail(dto.Email) {
 		return false, helper.MsgInValidFormatEmail
 	}
-	if helper.IsEmpty(param[2]) {
+	if helper.IsEmpty(dto.FirstName) {
 		return false, helper.MsgInValidFirstName
 	}
-	if helper.IsEmpty(param[3]) {
+	if helper.IsEmpty(dto.LastName) {
 		return false, helper.MsgInValidLastName
 	}
-	if helper.IsEmpty(param[4]) {
+	if helper.IsEmpty(dto.Password) {
 		return false, helper.MsgInValidPassword
 	}
-	if helper.IsEmpty(param[5]) {
+	if helper.IsEmpty(dto.Phone) {
 		return false, helper.MsgInValidPhone
 	}
-	if helper.IsEmpty(param[6]) {
+	if helper.IsEmpty(dto.ConfirmPassword) {
 		return false, helper.MsgInValidConfirmPassword
 	}
-	if helper.NotMatch(param[4], param[6]) {
+	if helper.NotMatch(dto.Password, dto.ConfirmPassword) {
 		return false, helper.MsgInValidConfirmPasswordNotMatch
 	}
 	return true, helper.Success

@@ -3,7 +3,8 @@ package services
 import (
 	"context"
 	"fmt"
-	"github.com/vuhoangphuc11/vhp-golang-rest-api/internal/models"
+	"github.com/vuhoangphuc11/vhp-golang-rest-api/internal/dto"
+	"github.com/vuhoangphuc11/vhp-golang-rest-api/internal/entity"
 	"github.com/xuri/excelize/v2"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -13,11 +14,11 @@ import (
 
 const SheetName = "User List"
 
-func PutParamToCreateUser(user models.User) models.User {
+func PutParamToCreateUser(user dto.UserDto) entity.User {
 	var createAt, _ = time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
 	password, _ := bcrypt.GenerateFromPassword([]byte(user.Password), 12)
 
-	newUser := models.User{
+	newUser := entity.User{
 		Id:        primitive.NewObjectID(),
 		Username:  user.Username,
 		Email:     user.Email,
@@ -35,20 +36,20 @@ func PutParamToCreateUser(user models.User) models.User {
 	return newUser
 }
 
-func PutParamToUpdateUser(user models.User) bson.M {
+func PutParamToUpdateUser(dto dto.UserDto) bson.M {
 	var updateAt, _ = time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
-	encryptPass, _ := bcrypt.GenerateFromPassword([]byte(user.Password), 12)
+	encryptPass, _ := bcrypt.GenerateFromPassword([]byte(dto.Password), 12)
 
 	updateUser := bson.M{
-		"email":     user.Email,
-		"firstname": user.FirstName,
-		"lastname":  user.LastName,
+		"email":     dto.Email,
+		"firstname": dto.FirstName,
+		"lastname":  dto.LastName,
 		"password":  string(encryptPass),
-		"age":       user.Age,
-		"gender":    user.Gender,
-		"phone":     user.Phone,
-		"isactive":  user.IsActive,
-		"role":      user.Role,
+		"age":       dto.Age,
+		"gender":    dto.Gender,
+		"phone":     dto.Phone,
+		"isactive":  dto.IsActive,
+		"role":      dto.Role,
 		"updateat":  updateAt,
 	}
 
@@ -103,22 +104,22 @@ func ExportExcel() bool {
 		return false
 	}
 
-	if err := f.SaveAs("simple.xlsx"); err != nil {
+	if err := f.SaveAs("list_user_active.xlsx"); err != nil {
 		return false
 	}
 
 	return true
 }
 
-func GetListUserIsActive() []models.User {
+func GetListUserIsActive() []entity.User {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	var users []models.User
+	var users []entity.User
 	defer cancel()
 
 	results, err := UserCollection.Find(ctx, bson.D{{"isactive", bson.M{"$exists": true}}})
 
 	for results.Next(ctx) {
-		var singleUser models.User
+		var singleUser entity.User
 		if err = results.Decode(&singleUser); err != nil {
 			return nil
 		}

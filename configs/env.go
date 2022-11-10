@@ -14,3 +14,14 @@ func EnvMongoURI() string {
 
 	return os.Getenv("MONGOURI")
 }
+
+//func GetConfig(str string) interface{} {
+//	viper.SetConfigFile(".env")
+//	err := viper.ReadInConfig()
+//	if err != nil {
+//		viper.SetConfigFile("config.yaml")
+//	}
+//	viper.ReadInConfig()
+//
+//	return viper.Get(str)
+//}

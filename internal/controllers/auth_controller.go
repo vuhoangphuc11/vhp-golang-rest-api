@@ -4,7 +4,8 @@ import (
 	"context"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/vuhoangphuc11/vhp-golang-rest-api/internal/models"
+	"github.com/vuhoangphuc11/vhp-golang-rest-api/internal/dto"
+	"github.com/vuhoangphuc11/vhp-golang-rest-api/internal/entity"
 	"github.com/vuhoangphuc11/vhp-golang-rest-api/internal/responses"
 	"github.com/vuhoangphuc11/vhp-golang-rest-api/internal/services"
 	"github.com/vuhoangphuc11/vhp-golang-rest-api/pkg/helper"
@@ -19,27 +20,28 @@ func Login(c *fiber.Ctx) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	paramArr := [2]string{}
-	paramArr[0] = c.FormValue("username")
-	paramArr[1] = c.FormValue("password")
+	auth := services.Auth{}
+	userDto := dto.UserDto{
+		Username: c.FormValue("username"),
+		Password: c.FormValue("password"),
+	}
+	var user entity.User
 
-	var user models.User
-
-	validateLogin, msg := middleware.ValidateLogin(paramArr)
+	validateLogin, msg := middleware.ValidateLogin(userDto)
 	if !validateLogin {
 		return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: helper.Error, Data: &fiber.Map{helper.Data: msg}})
 	}
 
-	err := services.UserCollection.FindOne(ctx, bson.M{"username": paramArr[0]}).Decode(&user)
+	err := services.UserCollection.FindOne(ctx, bson.M{"username": userDto.Username}).Decode(&user)
 	if helper.ErrorIsNil(err) {
 		return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: helper.Error, Data: &fiber.Map{helper.Data: helper.MsgUsernameNotFound}})
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(paramArr[1])); helper.ErrorIsNil(err) {
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(userDto.Password)); helper.ErrorIsNil(err) {
 		return c.Status(http.StatusBadRequest).JSON(responses.ResponseData{Status: http.StatusBadRequest, Message: helper.Error, Data: &fiber.Map{helper.Data: helper.MsgLoginFail}})
 	}
 
-	token, err := services.GenerateToken(user)
+	token, err := auth.GenerateToken(user)
 	if helper.ErrorIsNil(err) {
 		return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: helper.Error, Data: &fiber.Map{helper.Data: err.Error()}})
 	}
@@ -51,21 +53,24 @@ func RegisterAccount(c *fiber.Ctx) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	paramArr := [7]string{}
-	paramArr[0] = c.FormValue("username")
-	paramArr[1] = c.FormValue("email")
-	paramArr[2] = c.FormValue("first_name")
-	paramArr[3] = c.FormValue("last_name")
-	paramArr[4] = c.FormValue("password")
-	paramArr[5] = c.FormValue("phone")
-	paramArr[6] = c.FormValue("confirm_password")
+	auth := services.Auth{}
 
-	validateRegister, msg := middleware.ValidateRegister(paramArr)
+	userDto := dto.UserDto{
+		Username:        c.FormValue("username"),
+		Email:           c.FormValue("email"),
+		FirstName:       c.FormValue("first_name"),
+		LastName:        c.FormValue("last_name"),
+		Password:        c.FormValue("password"),
+		Phone:           c.FormValue("phone"),
+		ConfirmPassword: c.FormValue("confirm_password"),
+	}
+
+	validateRegister, msg := middleware.ValidateRegister(userDto)
 	if !validateRegister {
 		return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: helper.Error, Data: &fiber.Map{helper.Data: msg}})
 	}
 
-	newUser := services.PutParamToRegisterUser(paramArr)
+	newUser := auth.PutParamToRegisterUser(userDto)
 	err := services.UserCollection.FindOne(ctx, bson.M{"username": newUser.Username}).Decode(&newUser)
 	if !helper.ErrorIsNil(err) {
 		return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: helper.Error, Data: &fiber.Map{helper.Data: helper.MsgUsernameIsExist}})
@@ -83,9 +88,11 @@ func ForgotPassword(c *fiber.Ctx) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	code := services.EncodeToString(6)
+	auth := services.Auth{}
+
+	code := auth.EncodeToString(6)
 	username := c.FormValue("username")
-	var user models.User
+	var user entity.User
 
 	if helper.IsEmpty(username) {
 		return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: helper.Error, Data: &fiber.Map{helper.Data: helper.MsgInvalidUsername}})
@@ -103,7 +110,7 @@ func ForgotPassword(c *fiber.Ctx) error {
 		return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: helper.Error, Data: &fiber.Map{helper.Data: helper.MsgResetPasswordFail}})
 	}
 
-	sendNewPassword := services.SendMail(user.Email, helper.SubjectResetPass, services.ResetPassBodyContentSendMail(user.LastName, username, code))
+	sendNewPassword := auth.SendMail(user.Email, helper.SubjectResetPass, auth.ResetPassBodyContentSendMail(user.LastName, username, code))
 	if !sendNewPassword {
 		return c.Status(http.StatusBadRequest).JSON(responses.ResponseData{Status: http.StatusBadRequest, Message: helper.Error, Data: &fiber.Map{helper.Data: helper.MsgErrSendMail}})
 	}
@@ -115,29 +122,32 @@ func ChangePassword(c *fiber.Ctx) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
+	auth := services.Auth{}
 	userInToken := c.Locals("user").(*jwt.Token)
 	claims := userInToken.Claims.(jwt.MapClaims)
 	username := claims["username"].(string)
 	email := claims["email"].(string)
 	lastName := claims["lastname"].(string)
 
-	paramArr := [2]string{}
-	paramArr[0] = c.FormValue("password")
-	paramArr[1] = c.FormValue("confirm_password")
+	userDto := dto.UserDto{
+		Password:        c.FormValue("password"),
+		ConfirmPassword: c.FormValue("confirm_password"),
+	}
 
-	validateChangePass, msg := middleware.ValidateChangePass(paramArr)
+	validateChangePass, msg := middleware.ValidateChangePass(userDto)
 	if !validateChangePass {
 		return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: helper.Error, Data: &fiber.Map{helper.Data: msg}})
 	}
 
-	passwordNew, _ := bcrypt.GenerateFromPassword([]byte(paramArr[0]), 12)
+	passwordNew, _ := bcrypt.GenerateFromPassword([]byte(userDto.Password), 12)
 	_, updatePass := services.UserCollection.UpdateOne(ctx, bson.M{"username": username}, bson.M{"$set": bson.M{"password": string(passwordNew)}})
 
 	if helper.ErrorIsNil(updatePass) {
 		return c.Status(http.StatusInternalServerError).JSON(responses.ResponseData{Status: http.StatusInternalServerError, Message: helper.Error, Data: &fiber.Map{helper.Data: helper.MsgChangePassFail}})
 	}
 
-	mailChangePass := services.SendMail(email, helper.SubjectChangePass, services.ChangePassBodyContentSendMail(lastName, username))
+	mailChangePass := auth.SendMail(email, helper.SubjectChangePass, auth.ChangePassBodyContentSendMail(lastName, username))
+
 	if !mailChangePass {
 		return c.Status(http.StatusBadRequest).JSON(responses.ResponseData{Status: http.StatusBadRequest, Message: helper.Error, Data: &fiber.Map{helper.Data: helper.MsgErrSendMail}})
 	}

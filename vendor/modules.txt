@@ -1,6 +1,11 @@
 # github.com/andybalholm/brotli v1.0.4
 ## explicit; go 1.12
 github.com/andybalholm/brotli
+# github.com/fsnotify/fsnotify v1.5.4
+## explicit; go 1.16
+# github.com/gkampitakis/fiber-modules v1.1.10
+## explicit; go 1.19
+github.com/gkampitakis/fiber-modules/gracefulshutdown
 # github.com/go-playground/locales v0.14.0
 ## explicit; go 1.13
 github.com/go-playground/locales
@@ -11,38 +16,36 @@ github.com/go-playground/universal-translator
 # github.com/go-playground/validator/v10 v10.11.1
 ## explicit; go 1.13
 github.com/go-playground/validator/v10
-# github.com/gofiber/fiber/v2 v2.38.1
+# github.com/gofiber/fiber/v2 v2.39.0
 ## explicit; go 1.19
 github.com/gofiber/fiber/v2
 github.com/gofiber/fiber/v2/internal/bytebufferpool
-github.com/gofiber/fiber/v2/internal/colorable
 github.com/gofiber/fiber/v2/internal/dictpool
 github.com/gofiber/fiber/v2/internal/fasttemplate
 github.com/gofiber/fiber/v2/internal/fwd
-github.com/gofiber/fiber/v2/internal/isatty
 github.com/gofiber/fiber/v2/internal/memory
 github.com/gofiber/fiber/v2/internal/msgp
 github.com/gofiber/fiber/v2/internal/schema
 github.com/gofiber/fiber/v2/internal/uuid
-github.com/gofiber/fiber/v2/middleware/basicauth
 github.com/gofiber/fiber/v2/middleware/cors
-github.com/gofiber/fiber/v2/middleware/csrf
 github.com/gofiber/fiber/v2/middleware/limiter
 github.com/gofiber/fiber/v2/middleware/logger
 github.com/gofiber/fiber/v2/utils
-# github.com/gofiber/helmet/v2 v2.2.17
-## explicit; go 1.14
-github.com/gofiber/helmet/v2
+# github.com/gofiber/jwt/v3 v3.3.3
+## explicit; go 1.15
+github.com/gofiber/jwt/v3
 # github.com/golang-jwt/jwt/v4 v4.4.2
 ## explicit; go 1.16
 github.com/golang-jwt/jwt/v4
-# github.com/golang/snappy v0.0.1
+# github.com/golang/snappy v0.0.4
 ## explicit
 github.com/golang/snappy
+# github.com/hashicorp/hcl v1.0.0
+## explicit
 # github.com/joho/godotenv v1.4.0
 ## explicit; go 1.12
 github.com/joho/godotenv
-# github.com/klauspost/compress v1.15.11
+# github.com/klauspost/compress v1.15.12
 ## explicit; go 1.17
 github.com/klauspost/compress
 github.com/klauspost/compress/flate
@@ -57,17 +60,58 @@ github.com/klauspost/compress/zstd/internal/xxhash
 # github.com/leodido/go-urn v1.2.1
 ## explicit; go 1.13
 github.com/leodido/go-urn
-# github.com/montanaflynn/stats v0.0.0-20171201202039-1bf9dbcd8cbe
+# github.com/magiconair/properties v1.8.6
+## explicit; go 1.13
+# github.com/mattn/go-colorable v0.1.13
+## explicit; go 1.15
+github.com/mattn/go-colorable
+# github.com/mattn/go-isatty v0.0.16
+## explicit; go 1.15
+github.com/mattn/go-isatty
+# github.com/mattn/go-runewidth v0.0.14
+## explicit; go 1.9
+github.com/mattn/go-runewidth
+# github.com/mitchellh/mapstructure v1.5.0
+## explicit; go 1.14
+# github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826
 ## explicit
+github.com/mohae/deepcopy
+# github.com/montanaflynn/stats v0.6.6
+## explicit; go 1.13
 github.com/montanaflynn/stats
+# github.com/pelletier/go-toml v1.9.5
+## explicit; go 1.12
+# github.com/pelletier/go-toml/v2 v2.0.5
+## explicit; go 1.16
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
+# github.com/richardlehane/mscfb v1.0.4
+## explicit
+github.com/richardlehane/mscfb
+# github.com/richardlehane/msoleps v1.0.3
+## explicit
+github.com/richardlehane/msoleps/types
+# github.com/rivo/uniseg v0.4.2
+## explicit; go 1.18
+github.com/rivo/uniseg
+# github.com/spf13/afero v1.8.2
+## explicit; go 1.13
+# github.com/spf13/cast v1.5.0
+## explicit; go 1.18
+# github.com/spf13/jwalterweatherman v1.1.0
+## explicit
+# github.com/spf13/pflag v1.0.5
+## explicit; go 1.12
+# github.com/spf13/viper v1.13.0
+## explicit; go 1.17
+# github.com/subosito/gotenv v1.4.1
+## explicit; go 1.18
 # github.com/valyala/bytebufferpool v1.0.0
 ## explicit
 github.com/valyala/bytebufferpool
-# github.com/valyala/fasthttp v1.40.0
-## explicit; go 1.15
+# github.com/valyala/fasthttp v1.41.0
+## explicit; go 1.16
 github.com/valyala/fasthttp
 github.com/valyala/fasthttp/fasthttputil
 github.com/valyala/fasthttp/reuseport
@@ -84,8 +128,17 @@ github.com/xdg-go/scram
 # github.com/xdg-go/stringprep v1.0.3
 ## explicit; go 1.11
 github.com/xdg-go/stringprep
-# github.com/youmark/pkcs8 v0.0.0-20181117223130-1be2e3e5546d
-## explicit
+# github.com/xuri/efp v0.0.0-20220603152613-6918739fd470
+## explicit; go 1.11
+github.com/xuri/efp
+# github.com/xuri/excelize/v2 v2.6.1
+## explicit; go 1.15
+github.com/xuri/excelize/v2
+# github.com/xuri/nfp v0.0.0-20220409054826-5e722a1d9e22
+## explicit; go 1.15
+github.com/xuri/nfp
+# github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a
+## explicit; go 1.12
 github.com/youmark/pkcs8
 # go.mongodb.org/mongo-driver v1.10.3
 ## explicit; go 1.10
@@ -124,27 +177,61 @@ go.mongodb.org/mongo-driver/x/mongo/driver/operation
 go.mongodb.org/mongo-driver/x/mongo/driver/session
 go.mongodb.org/mongo-driver/x/mongo/driver/topology
 go.mongodb.org/mongo-driver/x/mongo/driver/wiremessage
-# golang.org/x/crypto v0.0.0-20221012134737-56aed061732a
+# golang.org/x/crypto v0.1.0
 ## explicit; go 1.17
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
+golang.org/x/crypto/md4
 golang.org/x/crypto/ocsp
 golang.org/x/crypto/pbkdf2
+golang.org/x/crypto/ripemd160
+golang.org/x/crypto/scrypt
 golang.org/x/crypto/sha3
-# golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
+# golang.org/x/net v0.1.0
+## explicit; go 1.17
+golang.org/x/net/html
+golang.org/x/net/html/atom
+golang.org/x/net/html/charset
+# golang.org/x/sync v0.1.0
 ## explicit
 golang.org/x/sync/errgroup
-# golang.org/x/sys v0.0.0-20221013171732-95e765b1cc43
+# golang.org/x/sys v0.1.0
 ## explicit; go 1.17
 golang.org/x/sys/cpu
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/text v0.3.7
+# golang.org/x/text v0.4.0
 ## explicit; go 1.17
+golang.org/x/text/encoding
+golang.org/x/text/encoding/charmap
+golang.org/x/text/encoding/htmlindex
+golang.org/x/text/encoding/internal
+golang.org/x/text/encoding/internal/identifier
+golang.org/x/text/encoding/japanese
+golang.org/x/text/encoding/korean
+golang.org/x/text/encoding/simplifiedchinese
+golang.org/x/text/encoding/traditionalchinese
+golang.org/x/text/encoding/unicode
+golang.org/x/text/feature/plural
+golang.org/x/text/internal
+golang.org/x/text/internal/catmsg
+golang.org/x/text/internal/format
 golang.org/x/text/internal/language
 golang.org/x/text/internal/language/compact
+golang.org/x/text/internal/number
+golang.org/x/text/internal/stringset
 golang.org/x/text/internal/tag
+golang.org/x/text/internal/utf8internal
 golang.org/x/text/language
+golang.org/x/text/message
+golang.org/x/text/message/catalog
+golang.org/x/text/runes
 golang.org/x/text/transform
 golang.org/x/text/unicode/norm
+# gopkg.in/ini.v1 v1.67.0
+## explicit
+# gopkg.in/yaml.v2 v2.4.0
+## explicit; go 1.15
+# gopkg.in/yaml.v3 v3.0.1
+## explicit

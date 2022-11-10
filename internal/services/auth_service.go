@@ -6,7 +6,8 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/vuhoangphuc11/vhp-golang-rest-api/configs"
-	"github.com/vuhoangphuc11/vhp-golang-rest-api/internal/models"
+	"github.com/vuhoangphuc11/vhp-golang-rest-api/internal/dto"
+	"github.com/vuhoangphuc11/vhp-golang-rest-api/internal/entity"
 	"github.com/vuhoangphuc11/vhp-golang-rest-api/pkg/helper"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -22,7 +23,19 @@ var Validate = validator.New()
 
 const SecretKey = "WuH0aNqFuc"
 
-func ResetPassBodyContentSendMail(name, username, code string) string {
+type AuthInterface interface {
+	ResetPassBodyContentSendMail(name, username, code string) string
+	ChangePassBodyContentSendMail(lastName, username string) string
+	PutParamToRegisterUser(dto dto.UserDto) entity.User
+	GenerateToken(user entity.User) (string, error)
+	SendMail(email, subject, body string) bool
+	EncodeToString(max int) string
+}
+
+type Auth struct {
+}
+
+func (r *Auth) ResetPassBodyContentSendMail(name, username, code string) string {
 	body :=
 		"\nHi " + name + "," +
 			"\n\nYour account's password is " + username + "." +
@@ -33,7 +46,7 @@ func ResetPassBodyContentSendMail(name, username, code string) string {
 	return body
 }
 
-func ChangePassBodyContentSendMail(lastName, username string) string {
+func (r *Auth) ChangePassBodyContentSendMail(lastName, username string) string {
 	body :=
 		"\nHi " + lastName + "," +
 			"\n\nPassword of account: " + username + "." +
@@ -43,7 +56,7 @@ func ChangePassBodyContentSendMail(lastName, username string) string {
 	return body
 }
 
-func GenerateToken(user models.User) (string, error) {
+func (r *Auth) GenerateToken(user entity.User) (string, error) {
 	// Create the Claims
 	claims := jwt.MapClaims{
 		"username": user.Username,
@@ -60,18 +73,18 @@ func GenerateToken(user models.User) (string, error) {
 	return token, err
 }
 
-func PutParamToRegisterUser(param [7]string) models.User {
+func (r *Auth) PutParamToRegisterUser(dto dto.UserDto) entity.User {
 	var createAt, _ = time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
-	passwordNew, _ := bcrypt.GenerateFromPassword([]byte(param[4]), 12)
+	passwordNew, _ := bcrypt.GenerateFromPassword([]byte(dto.Password), 12)
 
-	newUser := models.User{
+	newUser := entity.User{
 		Id:        primitive.NewObjectID(),
-		Username:  param[0],
-		Email:     param[1],
-		FirstName: param[2],
-		LastName:  param[3],
+		Username:  dto.Username,
+		Email:     dto.Email,
+		FirstName: dto.FirstName,
+		LastName:  dto.LastName,
 		Password:  string(passwordNew),
-		Phone:     param[5],
+		Phone:     dto.Phone,
 		IsActive:  true,
 		Role:      helper.User,
 		CreateAt:  createAt,
@@ -79,7 +92,7 @@ func PutParamToRegisterUser(param [7]string) models.User {
 	return newUser
 }
 
-func SendMail(email, subject, body string) bool {
+func (r *Auth) SendMail(email, subject, body string) bool {
 	// Sender data.
 	from := os.Getenv("EMAIL")
 	password := os.Getenv("PASSWORD")
@@ -99,10 +112,10 @@ func SendMail(email, subject, body string) bool {
 	message += fmt.Sprintf("\r\n%s\r\n", body)
 
 	// Authentication.
-	auth := smtp.PlainAuth("", from, password, smtpHost)
+	authentication := smtp.PlainAuth("", from, password, smtpHost)
 
 	// Sending email.
-	sendMail := smtp.SendMail(smtpHost+":"+smtpPort, auth, from, to, []byte(message))
+	sendMail := smtp.SendMail(smtpHost+":"+smtpPort, authentication, from, to, []byte(message))
 
 	if sendMail != nil {
 		return false
@@ -110,7 +123,7 @@ func SendMail(email, subject, body string) bool {
 	return true
 }
 
-func EncodeToString(max int) string {
+func (r *Auth) EncodeToString(max int) string {
 	b := make([]byte, max)
 	n, err := io.ReadAtLeast(rand.Reader, b, max)
 	if n != max {
