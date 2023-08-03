@@ -1,5 +1,3 @@
-# Project Name
-
 ## Introduction
 
 **vhp-golang-rest-api** is a web application built with the Golang programming language using the Fiber Web Framework and MongoDB. The application provides a user management system with features such as authentication, authorization, password recovery, password change, user data export to Excel, and CRUD operations for managing users.
